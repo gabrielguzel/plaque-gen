@@ -1,0 +1,53 @@
+<h1>Generer plaque</h1>
+<button id="capture">generer</button>
+<div>
+<label for="name">Plaque généré</label>
+
+<input type="text" id="plaque" name="name" required
+       minlength="4" maxlength="8" size="10">
+</div>
+<div>
+  <video id="preview" height="400" width="600" style="border: 1px solid black" autoplay></video>
+  <canvas id="photo" height="400" width="600" style="display:none"></canvas>
+</div>
+<script charset="utf-8">
+  const captureBtn = document.querySelector('#capture');
+  const previewVideo = document.querySelector('#preview');
+  const photoCanvas = document.querySelector('#photo');
+  const photoCtx = photoCanvas.getContext('2d');
+  const plaque = document.querySelector('#plaque')
+
+
+
+  document.addEventListener('DOMContentLoaded', async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true})
+      previewVideo.srcObject = stream
+
+      captureBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const {clientWidth: w, clientHeight: h} = previewVideo;
+          photoCtx.drawImage(previewVideo, 0, 0, w, h);
+          var imgAsDataUrl = photoCanvas.toDataURL("image/png");
+
+  let body = new FormData();
+  
+  body.append("upload",imgAsDataUrl);
+  // Or body.append('upload', base64Image);
+  body.append("regions", "be"); // Change to your country
+  fetch("https://api.platerecognizer.com/v1/plate-reader/", {
+    method: "POST",
+    headers: {
+      Authorization: "Token 1050752169cc9f6c08d000466f9a425262895f55",
+    },
+    body: body,
+  })
+    .then((res) => res.json())
+    .then((json) => plaque.value=json.results[0].plate)
+    .catch((err) => {
+      console.log(err);
+    });
+      });
+
+  });
+
+</script>
